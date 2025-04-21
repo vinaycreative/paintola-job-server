@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  userId            String   @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime
+  User              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Favorite {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt      DateTime       @default(now()) @db.Timestamp(6)
+  userId         String         @db.Uuid
+  imageId        String         @db.Uuid
+  GeneratedImage GeneratedImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  User           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, imageId])
+}
+
+model GeneratedImage {
+  id                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  prompt            String
+  negative_prompt   String?
+  seed              Int
+  img_result        String
+  createdAt         DateTime    @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime
+  userId            String      @db.Uuid
+  is_published      Boolean     @default(false)
+  model             IModel?
+  color_palette     Json?       @db.Json
+  prompt_enhanced   String?
+  image_input_url   String?
+  image_weight      Int?
+  aspect_ratio      IAspect
+  style_type        IStyleType?
+  style_builder     String?
+  image_description String?
+  Favorite          Favorite[]
+  User              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  amount    Float
+  currency  String
+  userId    String   @db.Uuid
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  sessionToken String   @id
+  userId       String   @db.Uuid
+  expires      DateTime @db.Timestamp(6)
+  createdAt    DateTime @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String           @default("NO_NAME")
+  email          String           @unique(map: "user_email_idx")
+  emailVerified  DateTime?        @db.Timestamp(6)
+  image          String?
+  password       String?
+  role           String           @default("user")
+  address        Json?            @db.Json
+  paymentMethod  String?
+  createdAt      DateTime         @default(now()) @db.Timestamp(6)
+  currency       String           @default("eur")
+  tokens         Int              @default(10)
+  Account        Account[]
+  Favorite       Favorite[]
+  GeneratedImage GeneratedImage[]
+  Payment        Payment[]
+  Session        Session[]
+  tokenEntries   tokens[]
+}
+
+model tokens {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  discount  Int
+  url       String
+  platform  IShare
+  isPending Boolean @default(true)
+  userId    String  @db.Uuid
+  User      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  prompt      String
+  userId      String   // 🔥 Tracks which user submitted the job
+  status      JobStatus @default(QUEUED)
+  progress    Int       @default(0)
+  imageUrl    String?   // filled when job is complete
+  error       String?   // store error message if failed
+  ideogramJobId String?   
+  metadata    Json?     
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum JobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model VerificationToken {
+  token   String
+  expires DateTime
+  email   String
+  id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  @@unique([token, email])
+}
+
+enum IAspect {
+  ASPECT_10_16
+  ASPECT_16_10
+  ASPECT_9_16
+  ASPECT_16_9
+  ASPECT_3_2
+  ASPECT_2_3
+  ASPECT_4_3
+  ASPECT_3_4
+  ASPECT_1_1
+  ASPECT_1_3
+  ASPECT_3_1
+}
+
+enum IColorSelector {
+  EMBER
+  FRESH
+  JUNGLE
+  MAGIC
+  MELON
+  MOSAIC
+  PASTEL
+  ULTRAMARINE
+}
+
+enum IModel {
+  V_1
+  V_2
+  V_2A
+}
+
+enum IShare {
+  V_1
+  V_2
+}
+
+enum IStyleType {
+  AUTO
+  GENERAL
+  REALISTIC
+  DESIGN
+  RENDER_3D
+  ANIME
+}
