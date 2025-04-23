@@ -110,8 +110,13 @@ model tokens {
 }
 
 model Job {
-  id          String   @id @default(cuid())
-  prompt      String
+  id                   String   @id @default(cuid())
+  prompt               String
+  negative_prompt      String?
+  model                String?
+  style_type           String?
+  aspect_ratio         IAspect?
+  magic_prompt_option  String?
   userId      String   // 🔥 Tracks which user submitted the job
   status      JobStatus @default(QUEUED)
   progress    Int       @default(0)
@@ -122,6 +127,7 @@ model Job {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
+
 
 enum JobStatus {
   QUEUED
