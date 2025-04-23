@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn src/index.ts",
-    "worker": "ts-node src/jobs/imageGenerationWorker.ts",
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "dev": "ts-node-dev src/index.ts",
+    "start": "node dist/index.js",
+    "worker": "node dist/jobs/imageGenerationWorker.js",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
