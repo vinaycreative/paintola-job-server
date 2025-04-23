@@ -101,7 +101,7 @@ const worker = new Worker(
   },
   {
     connection: redisConnection,
-    removeOnComplete: { age: 60, count: 1 },
-    removeOnFail: { age: 120, count: 1 },
+    removeOnComplete: { age: 60, count: 2 },
+    removeOnFail: { age: 120, count: 2 },
   }
 )

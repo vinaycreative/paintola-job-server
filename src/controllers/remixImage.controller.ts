@@ -45,25 +45,21 @@ export const handleRemixImage = async (req: Request, res: Response) => {
     })
 
     // ✅ Push to remix queue
-    await imageQueue.add(
-      "image",
-      {
-        jobId,
-        prompt,
-        userId,
-        model,
-        isRemix: true,
-        style_type,
-        aspect_ratio,
-        magic_prompt_option,
-        negative_prompt,
-        seed: seed ? parseInt(seed) : undefined,
-        color_palette,
-        image_weight: imageWeight ? parseInt(imageWeight) : 50,
-        image_input_url: imagePath,
-      },
-      { removeOnComplete: true, removeOnFail: true }
-    )
+    await imageQueue.add("image", {
+      jobId,
+      prompt,
+      userId,
+      model,
+      isRemix: true,
+      style_type,
+      aspect_ratio,
+      magic_prompt_option,
+      negative_prompt,
+      seed: seed ? parseInt(seed) : undefined,
+      color_palette,
+      image_weight: imageWeight ? parseInt(imageWeight) : 50,
+      image_input_url: imagePath,
+    })
 
     return res.status(200).json({
       message: "Remix job queued successfully",

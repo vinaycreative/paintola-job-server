@@ -36,23 +36,19 @@ export const handleGenerateImage = async (req: Request, res: Response) => {
     })
 
     // ✅ Push to queue (minimal payload)
-    await imageQueue.add(
-      "image",
-      {
-        jobId,
-        prompt,
-        userId,
-        model,
-        isRemix: false,
-        style_type,
-        aspect_ratio,
-        magic_prompt_option,
-        negative_prompt,
-        seed,
-        color_palette,
-      },
-      { removeOnComplete: true, removeOnFail: true }
-    )
+    await imageQueue.add("image", {
+      jobId,
+      prompt,
+      userId,
+      model,
+      isRemix: false,
+      style_type,
+      aspect_ratio,
+      magic_prompt_option,
+      negative_prompt,
+      seed,
+      color_palette,
+    })
 
     return res.status(200).json({
       message: "Job added to queue",
