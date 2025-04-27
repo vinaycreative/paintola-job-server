@@ -49,6 +49,7 @@ const worker = new Worker(
             image_input_url,
             color_palette,
             image_weight,
+            negative_prompt,
           })
         : await generateImageFromPrompt({
             prompt,
@@ -61,7 +62,7 @@ const worker = new Worker(
           })
 
       // 3️⃣ Upload to Cloudinary
-      const cdnUrl = await uploadImageFromUrl(imageUrl)
+      const cdnUrl = await uploadImageFromUrl(imageUrl, userId)
 
       // 4️⃣ Update DB with result
       await prisma.job.update({
@@ -96,12 +97,13 @@ const worker = new Worker(
       })
 
       console.error(`❌ Job ${jobId} failed:`, friendlyMessage)
+      console.log("error new :", error)
       return { error: friendlyMessage }
     }
   },
   {
     connection: redisConnection,
-    removeOnComplete: { age: 60, count: 2 },
-    removeOnFail: { age: 120, count: 2 },
+    removeOnComplete: { age: 60, count: 1 },
+    removeOnFail: { age: 120, count: 1 },
   }
 )

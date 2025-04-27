@@ -17,11 +17,13 @@ export const handleGenerateImage = async (req: Request, res: Response) => {
       is_published,
     } = req.body
 
+    console.log("req.body: ", req.body)
+
     if (!prompt || !userId) {
       return res.status(400).json({ error: "prompt and userId are required" })
     }
 
-    // ✅ Save job to DB
+    // Save job to DB
     const jobId = await createJobRecord({
       prompt,
       userId,

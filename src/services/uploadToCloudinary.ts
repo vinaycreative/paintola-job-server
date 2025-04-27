@@ -1,12 +1,16 @@
 import cloudinary from "../config/cloudinary"
 
-export const uploadImageFromUrl = async (imageUrl: string): Promise<string> => {
+export const uploadImageFromUrl = async (imageUrl: string, userId: string): Promise<string> => {
+  const timestamp = Date.now()
+  const filename = `${userId}-${timestamp}`
+
   try {
     const result = await cloudinary.uploader.upload(imageUrl, {
       folder: "paintola/generated",
-      use_filename: true,
+      public_id: filename,
+      use_filename: false,
       unique_filename: false,
-      overwrite: true,
+      overwrite: false,
     })
 
     return result.secure_url
@@ -16,16 +20,23 @@ export const uploadImageFromUrl = async (imageUrl: string): Promise<string> => {
   }
 }
 
-// ✅ For remix image uploads (from buffer/file)
-export const uploadImageFromFile = async (file: Express.Multer.File): Promise<string> => {
+// For remix image uploads (from buffer/file)
+export const uploadImageFromFile = async (
+  file: Express.Multer.File,
+  userId: string
+): Promise<string> => {
+  const timestamp = Date.now() // Optional but useful for debugging/tracing
+  const filename = `${userId}-${timestamp}`
+
   return new Promise((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
         {
           folder: "paintola/remix",
-          use_filename: true,
+          public_id: filename,
+          use_filename: false,
           unique_filename: false,
-          overwrite: true,
+          overwrite: false, // prevent any overwrite
         },
         (err, result) => {
           if (err || !result) {

@@ -5,6 +5,6 @@ import { asyncHandler } from "../middleware/asyncHandler"
 
 const router = Router()
 
-router.post("/", remixUpload.single("image_file"), asyncHandler(handleRemixImage))
+router.post("/", remixUpload, asyncHandler(handleRemixImage))
 
 export default router

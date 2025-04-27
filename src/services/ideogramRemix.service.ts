@@ -14,23 +14,10 @@ interface RemixOptions {
   image_weight: number
   model?: string
   style_type?: string
+  negative_prompt?: string
   aspect_ratio?: string
   magic_prompt_option?: string
   color_palette?: JSON
-}
-
-/**
- * Downloads image from a URL and returns a stream to be used in FormData
- */
-const downloadImageStream = (url: string): Promise<Readable> => {
-  return new Promise((resolve, reject) => {
-    get(url, (res) => {
-      if (res.statusCode !== 200) {
-        return reject(new Error(`Failed to download image: ${res.statusCode}`))
-      }
-      resolve(res)
-    }).on("error", reject)
-  })
 }
 
 export const generateRemixFromPrompt = async ({
@@ -40,6 +27,7 @@ export const generateRemixFromPrompt = async ({
   model,
   style_type,
   aspect_ratio,
+  negative_prompt,
   magic_prompt_option,
   color_palette,
 }: RemixOptions): Promise<string> => {
@@ -47,9 +35,13 @@ export const generateRemixFromPrompt = async ({
 
   try {
     if (!image_input_url) throw new Error("Missing image path for remix job")
-    const imageBuffer = fs.readFileSync(image_input_url)
 
-    // const imageStream = await downloadImageStream(image_input_url)
+    // Download image buffer from Cloudinary
+    const { data: imageBuffer } = await axios.get(image_input_url, {
+      responseType: "arraybuffer",
+    })
+
+    console.log("imageBuffer: ", imageBuffer)
 
     const imageRequest = {
       prompt,
@@ -58,7 +50,8 @@ export const generateRemixFromPrompt = async ({
       ...(style_type && { style_type }),
       ...(aspect_ratio && { aspect_ratio }),
       ...(magic_prompt_option && { magic_prompt_option }),
-      ...(color_palette && { color_palette }),
+      ...(negative_prompt && { negative_prompt }),
+      ...(color_palette && Object.keys(color_palette).length > 0 && { color_palette }),
     }
 
     const formData = new FormData()

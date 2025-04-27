@@ -13,7 +13,7 @@ interface GenerateOptions {
   aspect_ratio?: string
   magic_prompt_option?: string
   negative_prompt?: string
-  color_palette?: JSON
+  color_palette?: Record<string, any>
 }
 
 export const generateImageFromPrompt = async (options: GenerateOptions): Promise<string> => {
@@ -35,7 +35,7 @@ export const generateImageFromPrompt = async (options: GenerateOptions): Promise
       ...(aspect_ratio && { aspect_ratio }),
       ...(magic_prompt_option && { magic_prompt_option }),
       ...(negative_prompt && { negative_prompt }),
-      ...(color_palette && { color_palette }),
+      ...(color_palette && Object.keys(color_palette).length > 0 && { color_palette }),
     },
   }
 
