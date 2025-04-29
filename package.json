@@ -6,7 +6,8 @@
     "dev": "ts-node-dev --respawn src/index.ts",
     "worker": "ts-node src/jobs/imageGenerationWorker.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "delete:jobs": "ts-node scripts/deleteJobs.ts"
   },
   "keywords": [],
   "author": "",

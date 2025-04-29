@@ -1,10 +1,10 @@
 import { prisma } from "../db/client"
-import { JobStatus } from "@prisma/client"
 
 export interface SharedJobInput {
   prompt: string
   userId: string
   isRemix?: boolean
+  image_description?: string
   image_input_url?: string
   image_weight?: number
   model?: string
@@ -24,6 +24,7 @@ export const createJobRecord = async (input: SharedJobInput): Promise<string> =>
     model,
     style_type,
     aspect_ratio,
+    image_description: image_description,
     magic_prompt_option,
     negative_prompt,
     seed,
@@ -38,7 +39,7 @@ export const createJobRecord = async (input: SharedJobInput): Promise<string> =>
     data: {
       prompt,
       userId,
-      status: JobStatus.QUEUED,
+      status: "PROCESSING",
       progress: 0,
       model: model || "",
       style_type: style_type || undefined,

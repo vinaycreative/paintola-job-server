@@ -1,7 +1,7 @@
 import { Request, Response } from "express"
 import { imageQueue } from "../queue/imageQueue"
 import { createJobRecord } from "../services/createJobRecord"
-
+import { startImageWorker } from "../jobs/imageWorkerManager"
 export const handleGenerateImage = async (req: Request, res: Response) => {
   try {
     const {
@@ -12,6 +12,7 @@ export const handleGenerateImage = async (req: Request, res: Response) => {
       aspect_ratio,
       magic_prompt_option,
       negative_prompt,
+      image_description,
       seed,
       color_palette,
       is_published,
@@ -31,13 +32,14 @@ export const handleGenerateImage = async (req: Request, res: Response) => {
       style_type,
       aspect_ratio,
       magic_prompt_option,
+      image_description,
       negative_prompt,
       seed,
       color_palette,
       is_published,
     })
 
-    // ✅ Push to queue (minimal payload)
+    // Push to queue (minimal payload)
     await imageQueue.add("image", {
       jobId,
       prompt,
@@ -51,6 +53,8 @@ export const handleGenerateImage = async (req: Request, res: Response) => {
       seed,
       color_palette,
     })
+
+    await startImageWorker()
 
     return res.status(200).json({
       message: "Job added to queue",

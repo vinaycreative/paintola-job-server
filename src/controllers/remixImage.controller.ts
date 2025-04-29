@@ -2,6 +2,7 @@ import { Request, Response } from "express"
 import { uploadImageFromFile } from "../services/uploadToCloudinary"
 import { createJobRecord } from "../services/createJobRecord"
 import { imageQueue } from "../queue/imageQueue"
+import { startImageWorker } from "../jobs/imageWorkerManager"
 
 export const handleRemixImage = async (req: Request, res: Response) => {
   try {
@@ -16,6 +17,7 @@ export const handleRemixImage = async (req: Request, res: Response) => {
       seed,
       color_palette,
       is_published,
+      image_description,
       imageWeight,
     } = req.body
 
@@ -43,7 +45,8 @@ export const handleRemixImage = async (req: Request, res: Response) => {
       aspect_ratio,
       magic_prompt_option,
       negative_prompt,
-      seed: seed ? parseInt(seed) : undefined,
+      image_description,
+      seed: seed ? parseInt(seed) : 0,
       color_palette,
       is_published: is_published === "true",
       image_weight: imageWeight ? parseInt(imageWeight) : 50,
@@ -61,13 +64,14 @@ export const handleRemixImage = async (req: Request, res: Response) => {
       aspect_ratio,
       magic_prompt_option,
       negative_prompt,
-      seed: seed ? parseInt(seed) : undefined,
+      seed: seed ? parseInt(seed) : 0,
       color_palette,
       image_weight: imageWeight ? parseInt(imageWeight) : 50,
       image_input_url: image_input_url,
     })
 
     // 3. Start Worker dynamically if not running
+    await startImageWorker()
 
     return res.status(200).json({
       message: "Remix job queued successfully",
