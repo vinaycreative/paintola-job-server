@@ -135,7 +135,7 @@ export const initQueueEventListeners = () => {
       const io = getIO()
       console.log(`📢 [QueueEvent:active] Emitting 'job:progress' to user:${dbJob.userId}`)
       io.to(`user:${dbJob.userId}`).emit("job:progress", {
-        jobId: dbJob.id,
+        id: dbJob.id,
         status: "PROCESSING",
         progress: dbJob.progress ?? 10,
       })
@@ -170,7 +170,7 @@ export const initQueueEventListeners = () => {
       const io = getIO()
       console.log(`📢 [QueueEvent:completed] Emitting 'job:completed' to user:${dbJob.userId}`)
       io.to(`user:${dbJob.userId}`).emit("job:completed", {
-        jobId: dbJob.id,
+        id: dbJob.id,
         generateId: generateImage?.id,
         status: dbJob.status,
         progress: dbJob.progress ?? 100,
@@ -205,7 +205,7 @@ export const initQueueEventListeners = () => {
       const io = getIO()
       console.log(`📢 [QueueEvent:failed] Emitting 'job:failed' to user:${dbJob.userId}`)
       io.to(`user:${dbJob.userId}`).emit("job:failed", {
-        jobId: dbJob.id,
+        id: dbJob.id,
         status: "FAILED",
         error: dbJob.error || failedReason,
       })

@@ -44,7 +44,7 @@ export async function startImageWorker() {
           data: { status: "PROCESSING", progress: 10 },
         })
 
-        const imageUrl = isRemix
+        const data = isRemix
           ? await generateRemixFromPrompt({
               prompt,
               model,
@@ -52,6 +52,7 @@ export async function startImageWorker() {
               aspect_ratio,
               magic_prompt_option,
               image_input_url,
+              seed,
               color_palette,
               image_weight,
             })
@@ -60,12 +61,13 @@ export async function startImageWorker() {
               model,
               style_type,
               aspect_ratio,
+              seed,
               magic_prompt_option,
               color_palette,
               negative_prompt,
             })
 
-        const cdnUrl = await uploadImageFromUrl(imageUrl, userId)
+        const cdnUrl = await uploadImageFromUrl(data.url, userId)
 
         const job = await prisma.job.findUnique({ where: { id: jobId } })
 
@@ -76,7 +78,7 @@ export async function startImageWorker() {
             progress: 100,
             imageUrl: cdnUrl,
             metadata: {
-              original_url: imageUrl,
+              original_url: data.url,
               model,
               style_type,
               aspect_ratio,
@@ -92,16 +94,19 @@ export async function startImageWorker() {
             userId: userId,
             jobId: jobId,
             prompt: prompt,
-            negative_prompt: negative_prompt ?? undefined,
-            seed: seed ?? 0,
-            img_result: cdnUrl,
             model: model ?? undefined,
-            image_description: job?.image_description ? job?.image_description : "",
-            color_palette: color_palette ? JSON.parse(JSON.stringify(color_palette)) : undefined,
-            aspect_ratio: aspect_ratio,
             style_type: style_type ?? undefined,
-            image_input_url: image_input_url ?? undefined,
+            aspect_ratio: aspect_ratio,
+            color_palette: color_palette ? JSON.parse(JSON.stringify(color_palette)) : undefined,
+            negative_prompt: negative_prompt ?? undefined,
             image_weight: image_weight ?? undefined,
+            image_description: job?.image_description ? job?.image_description : "",
+            image_input_url: image_input_url ?? undefined,
+            seed: data.seed,
+            prompt_enhanced: job?.prompt,
+            img_result: cdnUrl,
+            style_builder: job?.style_builder,
+            style_builder_value: job?.style_builder_value,
             is_published: false,
             createdAt: new Date(),
             updatedAt: new Date(),

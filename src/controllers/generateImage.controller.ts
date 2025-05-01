@@ -1,21 +1,23 @@
 import { Request, Response } from "express"
 import { imageQueue } from "../queue/imageQueue"
-import { createJobRecord } from "../services/createJobRecord"
+import { createJobRecord, getJobById } from "../services/createJobRecord"
 import { startImageWorker } from "../jobs/imageWorkerManager"
+
 export const handleGenerateImage = async (req: Request, res: Response) => {
   try {
     const {
-      prompt,
       userId,
+      prompt,
       model,
       style_type,
       aspect_ratio,
       magic_prompt_option,
       negative_prompt,
-      image_description,
       seed,
       color_palette,
       is_published,
+      job_id,
+      retry,
     } = req.body
 
     console.log("req.body: ", req.body)
@@ -24,22 +26,42 @@ export const handleGenerateImage = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "prompt and userId are required" })
     }
 
-    // Save job to DB
-    const jobId = await createJobRecord({
-      prompt,
-      userId,
-      model,
-      style_type,
-      aspect_ratio,
-      magic_prompt_option,
-      image_description,
-      negative_prompt,
-      seed,
-      color_palette,
-      is_published,
-    })
+    // --- Parse JSON fields ---
+    let parsed_color_palette = color_palette
+    if (typeof color_palette === "string") {
+      try {
+        parsed_color_palette = JSON.parse(color_palette)
+      } catch (e) {
+        console.warn("Invalid color_palette JSON:", color_palette)
+        parsed_color_palette = null
+      }
+    }
 
-    // Push to queue (minimal payload)
+    // --- Retry-safe job logic ---
+    let jobId = job_id
+
+    if (retry && job_id) {
+      const existingJob = await getJobById(job_id)
+      if (!existingJob) {
+        return res.status(404).json({ error: "Retry requested but job not found" })
+      }
+      jobId = job_id
+    } else if (!job_id) {
+      jobId = await createJobRecord({
+        prompt,
+        userId,
+        model,
+        style_type,
+        aspect_ratio,
+        magic_prompt_option,
+        negative_prompt,
+        seed: seed ? parseInt(seed) : 0,
+        color_palette: parsed_color_palette,
+        is_published: is_published === "true" || is_published === true,
+      })
+    }
+
+    // ---  Queue job ---
     await imageQueue.add("image", {
       jobId,
       prompt,
@@ -50,14 +72,14 @@ export const handleGenerateImage = async (req: Request, res: Response) => {
       aspect_ratio,
       magic_prompt_option,
       negative_prompt,
-      seed,
-      color_palette,
+      seed: seed ? parseInt(seed) : 0,
+      color_palette: parsed_color_palette,
     })
 
     await startImageWorker()
 
     return res.status(200).json({
-      message: "Job added to queue",
+      message: retry ? "Retry queued successfully" : "Job added to queue",
       jobId,
     })
   } catch (err) {

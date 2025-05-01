@@ -39,24 +39,25 @@ model Favorite {
 
 model GeneratedImage {
   id                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  jobId     String?   @unique 
   prompt            String
+  model             IModel?
+  style_type        IStyleType?
+  aspect_ratio      IAspect
+  color_palette     Json?       @db.Json 
   negative_prompt   String?
+  image_weight      Int?
+  image_description String?
+  image_input_url   String?
   seed              Int
+  prompt_enhanced   String?
   img_result        String
+  style_builder     String?
+  style_builder_value String?
+  jobId     String?   @unique 
+  userId            String      @db.Uuid
   createdAt         DateTime    @default(now()) @db.Timestamp(6)
   updatedAt         DateTime
-  userId            String      @db.Uuid
   is_published      Boolean     @default(false)
-  model             IModel?
-  color_palette     Json?       @db.Json 
-  prompt_enhanced   String?
-  image_input_url   String?
-  image_weight      Int?
-  aspect_ratio      IAspect
-  style_type        IStyleType?
-  style_builder     String?
-  image_description String?
   Favorite          Favorite[]
   User              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -113,20 +114,25 @@ model tokens {
 
 model Job {
   id                   String   @id @default(cuid())
+  userId               String         @db.Uuid
   prompt               String
-  image_description    String?
-  negative_prompt      String?
+  status      JobStatus @default(QUEUED)
+  progress    Int       @default(0)
   model                String?
   style_type           String?
   aspect_ratio         IAspect?
+  image_description    String?
   magic_prompt_option  String?
-  userId               String         @db.Uuid
-  status      JobStatus @default(QUEUED)
-  progress    Int       @default(0)
+  negative_prompt      String?
+  seed                 Int?
+  image_input_url      String? 
+  color_palette        Json?
+  image_weight         Int?
+  style_builder     String?
+  style_builder_value String?
+  metadata    Json?     
   imageUrl    String?   // filled when job is complete
   error       String?   // store error message if failed
-  ideogramJobId String?   
-  metadata    Json?     
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   User      User    @relation(fields: [userId], references: [id], onDelete: Cascade)

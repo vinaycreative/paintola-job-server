@@ -11,17 +11,24 @@ interface GenerateOptions {
   model?: string
   style_type?: string
   aspect_ratio?: string
+  seed?: string
   magic_prompt_option?: string
   negative_prompt?: string
   color_palette?: Record<string, any>
 }
 
-export const generateImageFromPrompt = async (options: GenerateOptions): Promise<string> => {
+interface ResponseType {
+  url: string
+  seed: number
+}
+
+export const generateImageFromPrompt = async (options: GenerateOptions): Promise<ResponseType> => {
   const {
     prompt,
     model,
     style_type,
     aspect_ratio,
+    seed,
     magic_prompt_option,
     negative_prompt,
     color_palette,
@@ -31,11 +38,12 @@ export const generateImageFromPrompt = async (options: GenerateOptions): Promise
     image_request: {
       prompt,
       ...(model && { model }),
-      ...(style_type && { style_type }),
+      ...(model === "V_2" && style_type && { style_type }),
       ...(aspect_ratio && { aspect_ratio }),
       ...(magic_prompt_option && { magic_prompt_option }),
       ...(negative_prompt && { negative_prompt }),
       ...(color_palette && Object.keys(color_palette).length > 0 && { color_palette }),
+      ...(seed && { seed }),
     },
   }
 
@@ -48,11 +56,15 @@ export const generateImageFromPrompt = async (options: GenerateOptions): Promise
     })
 
     const imageUrl = response.data?.data?.[0]?.url
+    const seedIdo = response.data?.data?.[0]?.seed
     if (!imageUrl) {
       throw new Error("No image URL returned by Ideogram.")
     }
 
-    return imageUrl
+    return {
+      url: imageUrl,
+      seed: seedIdo,
+    }
   } catch (error) {
     throw new Error(getApiErrorMessage(error))
   }

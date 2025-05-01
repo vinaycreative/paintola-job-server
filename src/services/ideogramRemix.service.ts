@@ -16,8 +16,13 @@ interface RemixOptions {
   style_type?: string
   negative_prompt?: string
   aspect_ratio?: string
+  seed?: string
   magic_prompt_option?: string
   color_palette?: JSON
+}
+interface ResponseType {
+  url: string
+  seed: number
 }
 
 export const generateRemixFromPrompt = async ({
@@ -27,12 +32,11 @@ export const generateRemixFromPrompt = async ({
   model,
   style_type,
   aspect_ratio,
+  seed,
   negative_prompt,
   magic_prompt_option,
   color_palette,
-}: RemixOptions): Promise<string> => {
-  let imageUrl = ""
-
+}: RemixOptions): Promise<ResponseType> => {
   try {
     if (!image_input_url) throw new Error("Missing image path for remix job")
 
@@ -42,7 +46,7 @@ export const generateRemixFromPrompt = async ({
     })
 
     console.log("imageBuffer: ", imageBuffer)
-
+    console.log("color_palette: ", color_palette)
     const imageRequest = {
       prompt,
       image_weight,
@@ -52,9 +56,11 @@ export const generateRemixFromPrompt = async ({
       ...(magic_prompt_option && { magic_prompt_option }),
       ...(negative_prompt && { negative_prompt }),
       ...(color_palette && Object.keys(color_palette).length > 0 && { color_palette }),
+      ...(seed && { seed }),
     }
 
     const formData = new FormData()
+    console.log("imageRequest: ", imageRequest)
     formData.append("image_request", JSON.stringify(imageRequest))
     formData.append("image_file", imageBuffer, {
       filename: "remix.jpg",
@@ -69,25 +75,17 @@ export const generateRemixFromPrompt = async ({
       maxBodyLength: Infinity,
     })
 
-    imageUrl = response.data?.data?.[0]?.url
-
+    const imageUrl = response.data?.data?.[0]?.url
+    const seedIdo = response.data?.data?.[0]?.seed
     if (!imageUrl) {
-      throw new Error("No image URL returned by Ideogram remix API.")
+      throw new Error("No image URL returned by Ideogram.")
     }
 
-    return imageUrl
-  } catch (err) {
-    throw new Error(getApiErrorMessage(err))
-  } finally {
-    // Always delete temp file
-    if (image_input_url && fs.existsSync(image_input_url)) {
-      fs.unlink(image_input_url, (err) => {
-        if (err) {
-          console.warn("⚠️ Failed to delete temp file:", image_input_url, err)
-        } else {
-          console.log("🧹 Temp file cleaned:", image_input_url)
-        }
-      })
+    return {
+      url: imageUrl,
+      seed: seedIdo,
     }
+  } catch (err) {
+    throw new Error("IDEOGRAM ERROR: " + getApiErrorMessage(err))
   }
 }
