@@ -37,6 +37,11 @@ export const handleGenerateImage = async (req: Request, res: Response) => {
       }
     }
 
+    let final_style_type = style_type
+    if (model?.toLowerCase() === "v1") {
+      final_style_type = undefined
+    }
+
     // --- Retry-safe job logic ---
     let jobId = job_id
 
@@ -51,7 +56,7 @@ export const handleGenerateImage = async (req: Request, res: Response) => {
         prompt,
         userId,
         model,
-        style_type,
+        style_type: final_style_type,
         aspect_ratio,
         magic_prompt_option,
         negative_prompt,
@@ -68,7 +73,7 @@ export const handleGenerateImage = async (req: Request, res: Response) => {
       userId,
       model,
       isRemix: false,
-      style_type,
+      style_type: final_style_type,
       aspect_ratio,
       magic_prompt_option,
       negative_prompt,

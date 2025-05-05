@@ -47,28 +47,46 @@ export const handleRemixImage = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Missing imageFile or image_input_url fields" })
     }
 
-    const image_url = image_input_url
+    let image_url = image_input_url
       ? image_input_url
-      : await uploadImageFromFile(imageFile!, userId)
+      : imageFile
+      ? await uploadImageFromFile(imageFile!, userId)
+      : undefined
 
     let jobId = job_id
+    let final_style_type = style_type
+    if (model?.toLowerCase() === "v1") {
+      final_style_type = undefined
+    }
 
     if (retry && job_id) {
-      // Check if job exists in DB
       const existingJob = await getJobById(job_id)
       if (!existingJob) {
         return res.status(404).json({ error: "Retry requested but job not found" })
       }
-      // If job exists, reuse the jobId
+
       jobId = job_id
+
+      // ✅ Fallback if no new image provided
+      if (!image_url) {
+        if (!existingJob.image_input_url) {
+          return res
+            .status(400)
+            .json({ error: "Original job does not have a valid reference image." })
+        }
+        image_url = existingJob.image_input_url
+      }
     } else if (!job_id) {
-      // No retry, no job_id provided → create a new job
+      // No retry → create a new job
+      if (!image_url) {
+        return res.status(400).json({ error: "Missing imageFile or image_input_url fields" })
+      }
       jobId = await createJobRecord({
         prompt,
         userId,
         isRemix: true,
         model,
-        style_type,
+        style_type: final_style_type,
         aspect_ratio,
         magic_prompt_option,
         negative_prompt,
@@ -90,7 +108,7 @@ export const handleRemixImage = async (req: Request, res: Response) => {
       userId,
       model,
       isRemix: true,
-      style_type,
+      style_type: final_style_type,
       aspect_ratio,
       magic_prompt_option,
       negative_prompt,

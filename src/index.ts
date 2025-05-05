@@ -4,7 +4,6 @@ import dotenv from "dotenv"
 import cors from "cors"
 import apiRoutes from "./api"
 import { initSocketServer } from "./ws/socket"
-import "./queue/imageQueue"
 import { initQueueEventListeners } from "./queue/imageQueue"
 
 dotenv.config()

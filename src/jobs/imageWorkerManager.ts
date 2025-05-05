@@ -103,7 +103,7 @@ export async function startImageWorker() {
             image_description: job?.image_description ? job?.image_description : "",
             image_input_url: image_input_url ?? undefined,
             seed: data.seed,
-            prompt_enhanced: job?.prompt,
+            prompt_enhanced: magic_prompt_option.toLowerCase() === "on" ? data.prompt : "",
             img_result: cdnUrl,
             style_builder: job?.style_builder,
             style_builder_value: job?.style_builder_value,
@@ -129,7 +129,7 @@ export async function startImageWorker() {
     },
     {
       connection: redisConnection,
-      removeOnComplete: { age: 60, count: 2 },
+      removeOnComplete: { age: 120, count: 2 },
       removeOnFail: { age: 120, count: 2 },
       stalledInterval: 86400000,
     }

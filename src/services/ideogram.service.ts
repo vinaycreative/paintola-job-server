@@ -20,6 +20,7 @@ interface GenerateOptions {
 interface ResponseType {
   url: string
   seed: number
+  prompt: string
 }
 
 export const generateImageFromPrompt = async (options: GenerateOptions): Promise<ResponseType> => {
@@ -55,8 +56,9 @@ export const generateImageFromPrompt = async (options: GenerateOptions): Promise
       },
     })
 
-    const imageUrl = response.data?.data?.[0]?.url
-    const seedIdo = response.data?.data?.[0]?.seed
+    const imageUrl = response.data?.data?.[0]?.url || ""
+    const seedIdo = response.data?.data?.[0]?.seed || 0
+    const promptIdo = response.data?.data?.[0]?.prompt || ""
     if (!imageUrl) {
       throw new Error("No image URL returned by Ideogram.")
     }
@@ -64,6 +66,7 @@ export const generateImageFromPrompt = async (options: GenerateOptions): Promise
     return {
       url: imageUrl,
       seed: seedIdo,
+      prompt: promptIdo,
     }
   } catch (error) {
     throw new Error(getApiErrorMessage(error))

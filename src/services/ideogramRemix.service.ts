@@ -23,6 +23,7 @@ interface RemixOptions {
 interface ResponseType {
   url: string
   seed: number
+  prompt: string
 }
 
 export const generateRemixFromPrompt = async ({
@@ -40,16 +41,35 @@ export const generateRemixFromPrompt = async ({
   try {
     if (!image_input_url) throw new Error("Missing image path for remix job")
 
-    // Download image buffer from Cloudinary
-    const { data: imageBuffer } = await axios.get(image_input_url, {
-      responseType: "arraybuffer",
-    })
+    // 1. SAFE CHECK → Try downloading image buffer
+    let imageBuffer: Buffer
+    try {
+      const { data } = await axios.get(image_input_url, {
+        responseType: "arraybuffer",
+      })
+      imageBuffer = data
+    } catch (err) {
+      throw new Error(
+        `Failed to download image from URL: ${image_input_url}. Please ensure the image is publicly accessible.`
+      )
+    }
 
-    console.log("imageBuffer: ", imageBuffer)
+    // 2. SAFE CHECK → Validate buffer size
+    if (!imageBuffer || imageBuffer.byteLength < 10) {
+      throw new Error(
+        "Downloaded image is empty or corrupted. Please provide a valid reference image."
+      )
+    }
+
+    console.log("✅ Image downloaded successfully. Size:", imageBuffer.byteLength)
     console.log("color_palette: ", color_palette)
+
+    // 3. SAFE CHECK → Validate image_weight
+    const validImageWeight = image_weight && !isNaN(image_weight) ? image_weight : 50
+
     const imageRequest = {
       prompt,
-      image_weight,
+      image_weight: validImageWeight,
       ...(model && { model }),
       ...(style_type && { style_type }),
       ...(aspect_ratio && { aspect_ratio }),
@@ -59,8 +79,9 @@ export const generateRemixFromPrompt = async ({
       ...(seed && { seed }),
     }
 
-    const formData = new FormData()
     console.log("imageRequest: ", imageRequest)
+
+    const formData = new FormData()
     formData.append("image_request", JSON.stringify(imageRequest))
     formData.append("image_file", imageBuffer, {
       filename: "remix.jpg",
@@ -77,6 +98,7 @@ export const generateRemixFromPrompt = async ({
 
     const imageUrl = response.data?.data?.[0]?.url
     const seedIdo = response.data?.data?.[0]?.seed
+    const promptIdo = response.data?.data?.[0]?.prompt || ""
     if (!imageUrl) {
       throw new Error("No image URL returned by Ideogram.")
     }
@@ -84,6 +106,7 @@ export const generateRemixFromPrompt = async ({
     return {
       url: imageUrl,
       seed: seedIdo,
+      prompt: promptIdo,
     }
   } catch (err) {
     throw new Error("IDEOGRAM ERROR: " + getApiErrorMessage(err))
